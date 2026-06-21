@@ -1,0 +1,51 @@
+# Tek komutla hem LibreTranslate (çeviri) hem de eklentiyi ayağa kaldırır:
+#   docker compose up -d
+#
+# Sadece çeviri sunucusunu çalıştırmak isterseniz (eklentiyi npm ile çalıştırırken):
+#   docker compose up -d libretranslate
+
+services:
+  libretranslate:
+    image: libretranslate/libretranslate:latest
+    container_name: libretranslate
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      # Sadece İngilizce ve Türkçe modellerini yükle: daha hızlı başlangıç, düşük RAM
+      LT_LOAD_ONLY: "en,tr"
+      LT_UPDATE_MODELS: "true"
+    volumes:
+      - lt-models:/home/libretranslate/.local/share/argos-translate
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request,sys; sys.exit(0) if urllib.request.urlopen('http://localhost:5000/languages').getcode()==200 else sys.exit(1)\""]
+      interval: 30s
+      timeout: 10s
+      retries: 12
+      start_period: 120s
+
+  addon:
+    build: .
+    container_name: turkish-subs-addon
+    restart: unless-stopped
+    depends_on:
+      libretranslate:
+        condition: service_healthy
+    ports:
+      - "7000:7000"
+    environment:
+      PORT: "7000"
+      BASE_URL: "${BASE_URL:-http://127.0.0.1:7000}"
+      TRANSLATE_PROVIDER: "libretranslate"
+      # Konteyner ağı içinden çeviri sunucusuna servis adıyla erişilir
+      LIBRETRANSLATE_URL: "http://libretranslate:5000"
+      OPENSUBTITLES_API_KEY: "${OPENSUBTITLES_API_KEY}"
+      OPENSUBTITLES_USERNAME: "${OPENSUBTITLES_USERNAME:-}"
+      OPENSUBTITLES_PASSWORD: "${OPENSUBTITLES_PASSWORD:-}"
+      OPENSUBTITLES_USER_AGENT: "${OPENSUBTITLES_USER_AGENT:-TurkishSubsTranslator v1.0}"
+      SUBTITLE_LANG: "${SUBTITLE_LANG:-tur}"
+    volumes:
+      - ./.cache:/app/.cache
+
+volumes:
+  lt-models:
