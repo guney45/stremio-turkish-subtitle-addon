@@ -9,8 +9,11 @@
 // Ayrıca uygulamayı tanımlayan bir User-Agent zorunludur.
 
 const config = require('./config')
+const { fetchWithTimeout } = require('./util')
 
 const DEFAULT_HOST = 'https://api.opensubtitles.com'
+const API_TIMEOUT = 30000
+const FILE_TIMEOUT = 60000
 
 // Oturum durumu (bellekte). Token ~24 saat geçerli.
 const auth = {
@@ -45,11 +48,15 @@ async function ensureLogin() {
   if (!username || !password) return
   if (auth.token && Date.now() - auth.ts < 23 * 60 * 60 * 1000) return
 
-  const res = await fetch(`${DEFAULT_HOST}/api/v1/login`, {
-    method: 'POST',
-    headers: baseHeaders({ 'Content-Type': 'application/json' }),
-    body: JSON.stringify({ username, password }),
-  })
+  const res = await fetchWithTimeout(
+    `${DEFAULT_HOST}/api/v1/login`,
+    {
+      method: 'POST',
+      headers: baseHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ username, password }),
+    },
+    API_TIMEOUT
+  )
   if (!res.ok) {
     const body = await res.text().catch(() => '')
     throw new Error(`OpenSubtitles girişi başarısız (${res.status}): ${body}`)
@@ -100,7 +107,7 @@ async function search(params) {
 
   const url = `${host}/api/v1/subtitles?${qp.toString()}`
   console.log('[opensubtitles] arama:', url)
-  const res = await fetch(url, { headers: baseHeaders() })
+  const res = await fetchWithTimeout(url, { headers: baseHeaders() }, API_TIMEOUT)
   if (!res.ok) {
     const body = await res.text().catch(() => '')
     throw new Error(`OpenSubtitles arama hatası (${res.status}): ${body}`)
@@ -125,11 +132,15 @@ async function getDownloadLink(fileId) {
 
   const host = auth.host || DEFAULT_HOST
   console.log(`[opensubtitles] indirme linki isteniyor: file_id=${fileId}`)
-  const res = await fetch(`${host}/api/v1/download`, {
-    method: 'POST',
-    headers: baseHeaders({ 'Content-Type': 'application/json' }),
-    body: JSON.stringify({ file_id: Number(fileId), sub_format: 'srt' }),
-  })
+  const res = await fetchWithTimeout(
+    `${host}/api/v1/download`,
+    {
+      method: 'POST',
+      headers: baseHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ file_id: Number(fileId), sub_format: 'srt' }),
+    },
+    API_TIMEOUT
+  )
   if (!res.ok) {
     const body = await res.text().catch(() => '')
     throw new Error(`OpenSubtitles indirme hatası (${res.status}): ${body}`)
@@ -147,9 +158,11 @@ async function getDownloadLink(fileId) {
 // İndirme linkini alıp dosyanın ham içeriğini (Buffer) döndürür.
 async function downloadSubtitle(fileId) {
   const info = await getDownloadLink(fileId)
-  const res = await fetch(info.link, {
-    headers: { 'User-Agent': config.openSubtitles.userAgent },
-  })
+  const res = await fetchWithTimeout(
+    info.link,
+    { headers: { 'User-Agent': config.openSubtitles.userAgent } },
+    FILE_TIMEOUT
+  )
   if (!res.ok) {
     throw new Error(`Altyazı dosyası indirilemedi (${res.status})`)
   }

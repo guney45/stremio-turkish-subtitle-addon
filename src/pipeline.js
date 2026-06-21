@@ -16,6 +16,12 @@ const { translateLines } = require('./translate')
 
 const inflight = new Map()
 
+// Çevrilmiş dosya hazırsa (cache) buffer döner, değilse null.
+function readCached(fileId) {
+  const outPath = cache.translatedPath(fileId, config.targetLang, config.provider)
+  return cache.readIfExists(outPath)
+}
+
 async function build(fileId) {
   const provider = config.provider
   const target = config.targetLang
@@ -82,4 +88,4 @@ function getTranslatedVtt(fileId) {
   return promise
 }
 
-module.exports = { getTranslatedVtt }
+module.exports = { getTranslatedVtt, readCached }

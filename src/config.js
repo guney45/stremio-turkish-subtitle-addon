@@ -26,6 +26,13 @@ const config = {
 
   maxResults: Math.max(1, int(process.env.MAX_RESULTS, 3)),
   translateConcurrency: Math.max(1, int(process.env.TRANSLATE_CONCURRENCY, 4)),
+  // Tek çeviri isteğinde gönderilecek satır sayısı (büyük olması verimi artırır)
+  translateBatchSize: Math.max(1, int(process.env.TRANSLATE_BATCH_SIZE, 100)),
+  // Tek çeviri isteği için zaman aşımı
+  translateTimeoutMs: int(process.env.TRANSLATE_TIMEOUT_MS, 120000),
+  // /sub isteğinde çeviri için en fazla ne kadar beklensin (aşılırsa placeholder döner,
+  // çeviri arka planda sürer). Stremio'nun kendi zaman aşımının altında tutun.
+  subWaitMs: int(process.env.SUB_WAIT_MS, 15000),
   cacheDir: path.resolve(process.env.CACHE_DIR || path.join(process.cwd(), '.cache')),
   cacheMaxAge: int(process.env.CACHE_MAX_AGE, 7 * 24 * 60 * 60),
   useStremioProxy: bool(process.env.USE_STREMIO_PROXY, false),

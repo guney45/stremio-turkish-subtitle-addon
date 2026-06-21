@@ -5,9 +5,7 @@
 // eder ve "translatedText" alanında aynı uzunlukta dizi döndürür.
 
 const config = require('../config')
-const { chunk, mapLimit } = require('../util')
-
-const BATCH_SIZE = 80
+const { chunk, mapLimit, fetchWithTimeout } = require('../util')
 
 async function rawTranslate(lines, { source, target }) {
   const body = { q: lines, source, target, format: 'text' }
@@ -15,11 +13,15 @@ async function rawTranslate(lines, { source, target }) {
 
   let res
   try {
-    res = await fetch(`${config.libreTranslate.url}/translate`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-      body: JSON.stringify(body),
-    })
+    res = await fetchWithTimeout(
+      `${config.libreTranslate.url}/translate`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify(body),
+      },
+      config.translateTimeoutMs
+    )
   } catch (e) {
     throw new Error(
       `LibreTranslate'e bağlanılamadı (${config.libreTranslate.url}): ${e.message}. ` +
@@ -48,10 +50,16 @@ async function translateBatch(lines, opts) {
 }
 
 async function translate(lines, opts) {
-  const batches = chunk(lines, BATCH_SIZE)
-  const results = await mapLimit(batches, config.translateConcurrency, (batch) =>
-    translateBatch(batch, opts)
-  )
+  const batches = chunk(lines, config.translateBatchSize)
+  let done = 0
+  const results = await mapLimit(batches, config.translateConcurrency, async (batch) => {
+    const out = await translateBatch(batch, opts)
+    done += 1
+    if (done === 1 || done === batches.length || done % 5 === 0) {
+      console.log(`[libretranslate] ilerleme: ${done}/${batches.length} grup çevrildi`)
+    }
+    return out
+  })
   return results.flat()
 }
 

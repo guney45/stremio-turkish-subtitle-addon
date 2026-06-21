@@ -172,6 +172,11 @@ ekleyip `src/translate/index.js` içindeki tabloya kaydetmen yeterli.
 
 ## Sorun giderme
 
+- **İlk seçimde "⏳ Türkçe çeviri hazırlanıyor…" görünüyor:** Normaldir. Bir altyazıyı
+  ilk kez seçtiğinde tüm dosya çevrilir (CPU'da ~1-3 dk). Loglarda `[pipeline] TAMAM`
+  satırını görünce altyazıyı kapatıp tekrar seç; tam Türkçe altyazı gelir ve artık
+  beklemezsin (önbelleğe alınır, tekrar izleme/ileri sarma anında). Hız için Docker
+  Desktop'ta CPU/RAM'i artır ya da daha hızlı bir sağlayıcı (DeepL/Google) seç.
 - **`bind: address already in use` / port 5000 veya 7000 hatası (macOS):** macOS'ta
   bu portları "AirPlay Receiver" kullanır. İki çözüm: (1) **Sistem Ayarları → Genel →
   AirDrop ve Handoff → AirPlay Alıcısı**'nı kapat (en kolay, varsayılan portlar çalışır),

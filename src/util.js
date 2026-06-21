@@ -27,4 +27,20 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-module.exports = { chunk, mapLimit, sleep }
+// Zaman aşımlı fetch (sonsuza kadar asılı kalmayı önler).
+async function fetchWithTimeout(url, options = {}, timeoutMs = 60000) {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), timeoutMs)
+  try {
+    return await fetch(url, { ...options, signal: controller.signal })
+  } catch (e) {
+    if (e && e.name === 'AbortError') {
+      throw new Error(`İstek zaman aşımına uğradı (${timeoutMs}ms)`)
+    }
+    throw e
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
+module.exports = { chunk, mapLimit, sleep, fetchWithTimeout }

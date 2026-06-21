@@ -120,11 +120,23 @@ function buildVtt(cues) {
   return out
 }
 
+// Bilgilendirme amaçlı (placeholder / hata) VTT üretir: mesajı ilk birkaç dakika
+// boyunca periyodik gösterir, böylece kullanıcı ekranda görür.
+function buildNoticeVtt(message, { everyMs = 30000, count = 12, durationMs = 6000 } = {}) {
+  const cues = []
+  for (let i = 0; i < count; i++) {
+    const start = i * everyMs
+    cues.push({ start, end: start + durationMs, text: message })
+  }
+  return buildVtt(cues)
+}
+
 module.exports = {
   decodeBuffer,
   maybeGunzip,
   parse,
   buildVtt,
+  buildNoticeVtt,
   timeToMs,
   msToVtt,
 }
