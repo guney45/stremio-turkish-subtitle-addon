@@ -21,21 +21,29 @@ services:
       LT_LOAD_ONLY: "en,tr"
       LT_UPDATE_MODELS: "true"
     volumes:
-      - lt-models:/home/libretranslate/.local/share/argos-translate
+      # ÖNEMLİ: volume'u .local'e bağlıyoruz (daha derin bir yola değil) ki
+      # konteynerdeki libretranslate kullanıcısının izinleri korunsun. Daha derin
+      # bir yola bağlamak klasörü root'a ait kılar ve "Permission denied" hatası verir.
+      - lt-models:/home/libretranslate/.local
     healthcheck:
-      test: ["CMD-SHELL", "python -c \"import urllib.request,sys; sys.exit(0) if urllib.request.urlopen('http://localhost:5000/languages').getcode()==200 else sys.exit(1)\""]
-      interval: 30s
+      # Konteynerin kendi venv python'ı ile HTTP kontrolü (sürümden bağımsız, sağlam)
+      test: ["CMD-SHELL", "/app/venv/bin/python -c \"import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:5000/languages').getcode()==200 else 1)\""]
+      interval: 15s
       timeout: 10s
-      retries: 12
-      start_period: 120s
+      retries: 10
+      # İlk açılışta model indirmesi uzun sürebilir; bol süre tanı
+      start_period: 300s
 
   addon:
     build: .
     container_name: turkish-subs-addon
     restart: unless-stopped
     depends_on:
+      # service_started: eklenti, LibreTranslate'in "healthy" olmasını beklemeden
+      # hemen açılır (model indirilirken bile landing/manifest erişilebilir olur).
+      # İlk çeviri, model hazır olduğunda çalışır.
       libretranslate:
-        condition: service_healthy
+        condition: service_started
     ports:
       # macOS'ta 7000 portu da AirPlay tarafından kullanılabilir. Doluysa .env'de
       # ADDON_HOST_PORT=7700 yapın ve BASE_URL'i de http://127.0.0.1:7700 olarak güncelleyin.

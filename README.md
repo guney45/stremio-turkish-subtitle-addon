@@ -177,6 +177,10 @@ ekleyip `src/translate/index.js` içindeki tabloya kaydetmen yeterli.
   AirDrop ve Handoff → AirPlay Alıcısı**'nı kapat (en kolay, varsayılan portlar çalışır),
   veya (2) `.env`'de `ADDON_HOST_PORT=7700` (+ `BASE_URL=http://127.0.0.1:7700`) ve
   gerekirse `LT_HOST_PORT=5050` ayarla, sonra `docker compose down && docker compose up -d`.
+- **`container libretranslate is unhealthy` / `Permission denied: .../argos-translate`:**
+  Eski/bozuk model volume'undan kaynaklanır. Volume'u sıfırlayıp yeniden başlat:
+  `docker compose down -v && docker compose up -d`. İlk açılışta model indirileceği
+  için `docker compose logs -f libretranslate` ile hazır olmasını bekle.
 - **Altyazı listesinde Türkçe çıkmıyor:** `.env` içindeki `OPENSUBTITLES_API_KEY`
   dolu mu? Konsolda uyarı var mı? İçeriğin İngilizce altyazısı OpenSubtitles'ta
   mevcut mu?
