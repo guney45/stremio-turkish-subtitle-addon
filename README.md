@@ -172,6 +172,11 @@ ekleyip `src/translate/index.js` içindeki tabloya kaydetmen yeterli.
 
 ## Sorun giderme
 
+- **`bind: address already in use` / port 5000 veya 7000 hatası (macOS):** macOS'ta
+  bu portları "AirPlay Receiver" kullanır. İki çözüm: (1) **Sistem Ayarları → Genel →
+  AirDrop ve Handoff → AirPlay Alıcısı**'nı kapat (en kolay, varsayılan portlar çalışır),
+  veya (2) `.env`'de `ADDON_HOST_PORT=7700` (+ `BASE_URL=http://127.0.0.1:7700`) ve
+  gerekirse `LT_HOST_PORT=5050` ayarla, sonra `docker compose down && docker compose up -d`.
 - **Altyazı listesinde Türkçe çıkmıyor:** `.env` içindeki `OPENSUBTITLES_API_KEY`
   dolu mu? Konsolda uyarı var mı? İçeriğin İngilizce altyazısı OpenSubtitles'ta
   mevcut mu?
