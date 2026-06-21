@@ -23,13 +23,18 @@ function createApp() {
   // Çevrilmiş altyazı dosyasını servis et: /sub/<file_id>.vtt
   app.get(/^\/sub\/(\d+)\.vtt$/, async (req, res) => {
     const fileId = req.params[0]
+    const t0 = Date.now()
+    console.log(`[sub] istek geldi: file_id=${fileId}`)
     try {
-      const { buffer } = await pipeline.getTranslatedVtt(fileId)
+      const { buffer, fromCache } = await pipeline.getTranslatedVtt(fileId)
       res.setHeader('Content-Type', 'text/vtt; charset=utf-8')
       res.setHeader('Cache-Control', `public, max-age=${config.cacheMaxAge}`)
       res.end(buffer)
+      console.log(
+        `[sub] gönderildi: file_id=${fileId} ${buffer.length} byte cache=${fromCache} (${Date.now() - t0}ms)`
+      )
     } catch (e) {
-      console.error('[sub] servis hatası:', e.message)
+      console.error(`[sub] servis hatası: file_id=${fileId}: ${e.message}`)
       res.status(502)
       res.setHeader('Content-Type', 'text/plain; charset=utf-8')
       res.end(`Altyazı çevrilemedi: ${e.message}`)

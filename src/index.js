@@ -2,6 +2,7 @@
 
 const config = require('./config')
 const { createApp } = require('./server')
+const { sleep } = require('./util')
 
 function preflight() {
   if (!config.openSubtitles.apiKey) {
@@ -17,6 +18,33 @@ function preflight() {
   }
 }
 
+// LibreTranslate'in gerçekten çeviri yapabildiğini başlangıçta doğrular (ve modeli
+// önceden ısıtır). Model iniyorsa hazır olana kadar bekler.
+async function libreTranslateSelfTest() {
+  if (config.provider !== 'libretranslate') return
+  const { translateLines } = require('./translate')
+  for (let attempt = 1; attempt <= 12; attempt++) {
+    try {
+      const out = await translateLines(['Hello, world.'], {
+        source: config.sourceLang,
+        target: config.targetLang,
+      })
+      console.log(`[self-test] LibreTranslate çalışıyor ✓  "Hello, world." -> "${out[0]}"`)
+      return
+    } catch (e) {
+      if (attempt === 1) {
+        console.log(
+          '[self-test] LibreTranslate henüz hazır değil (ilk açılışta model iniyor olabilir), bekleniyor...'
+        )
+      }
+      await sleep(5000)
+    }
+  }
+  console.warn(
+    '[self-test] LibreTranslate ~1 dk içinde yanıt vermedi. `docker compose logs libretranslate` ile kontrol edin.'
+  )
+}
+
 const app = createApp()
 const server = app.listen(config.port, () => {
   preflight()
@@ -25,6 +53,7 @@ const server = app.listen(config.port, () => {
   console.log(`  Karşılama sayfası : ${config.baseUrl}`)
   console.log(`  Manifest (Stremio): ${manifestUrl}`)
   console.log('  Bu manifest adresini Stremio > Eklentiler > "Add addon" kısmına yapıştırın.\n')
+  libreTranslateSelfTest()
 })
 
 server.on('error', (e) => {

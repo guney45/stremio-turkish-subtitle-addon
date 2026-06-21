@@ -60,6 +60,7 @@ async function ensureLogin() {
   if (data.base_url) {
     auth.host = `https://${String(data.base_url).replace(/^https?:\/\//, '').replace(/\/+$/, '')}`
   }
+  console.log(`[opensubtitles] giriş yapıldı (host=${auth.host})`)
 }
 
 function mapItem(item) {
@@ -98,6 +99,7 @@ async function search(params) {
   if (params.moviehash) qp.set('moviehash', String(params.moviehash).toLowerCase())
 
   const url = `${host}/api/v1/subtitles?${qp.toString()}`
+  console.log('[opensubtitles] arama:', url)
   const res = await fetch(url, { headers: baseHeaders() })
   if (!res.ok) {
     const body = await res.text().catch(() => '')
@@ -122,6 +124,7 @@ async function getDownloadLink(fileId) {
   await ensureLogin().catch(() => {})
 
   const host = auth.host || DEFAULT_HOST
+  console.log(`[opensubtitles] indirme linki isteniyor: file_id=${fileId}`)
   const res = await fetch(`${host}/api/v1/download`, {
     method: 'POST',
     headers: baseHeaders({ 'Content-Type': 'application/json' }),
@@ -132,6 +135,9 @@ async function getDownloadLink(fileId) {
     throw new Error(`OpenSubtitles indirme hatası (${res.status}): ${body}`)
   }
   const data = await res.json()
+  console.log(
+    `[opensubtitles] indirme yanıtı: file_id=${fileId} kalan_kota=${data.remaining} link=${data.link ? 'var' : 'YOK'}`
+  )
   if (!data || !data.link) {
     throw new Error(`OpenSubtitles indirme linki alınamadı: ${JSON.stringify(data)}`)
   }
@@ -148,7 +154,9 @@ async function downloadSubtitle(fileId) {
     throw new Error(`Altyazı dosyası indirilemedi (${res.status})`)
   }
   const arrayBuffer = await res.arrayBuffer()
-  return { buffer: Buffer.from(arrayBuffer), info }
+  const buffer = Buffer.from(arrayBuffer)
+  console.log(`[opensubtitles] altyazı dosyası indirildi: ${buffer.length} byte ("${info.file_name || ''}")`)
+  return { buffer, info }
 }
 
 module.exports = { search, getDownloadLink, downloadSubtitle }
