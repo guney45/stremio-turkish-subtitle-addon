@@ -16,10 +16,14 @@ function preflight() {
   } else {
     console.log(`[bilgi] Çeviri sağlayıcısı: ${config.provider}`)
   }
+  if (!config.baseUrlOverride) {
+    console.log('[bilgi] BASE_URL ayarlı değil — altyazı adresleri isteğin Host\'undan türetilecek (TV/telefon için önerilir).')
+  } else {
+    console.log(`[bilgi] BASE_URL sabit: ${config.baseUrlOverride}`)
+  }
 }
 
-// LibreTranslate'in gerçekten çeviri yapabildiğini başlangıçta doğrular (ve modeli
-// önceden ısıtır). Model iniyorsa hazır olana kadar bekler.
+// LibreTranslate'in gerçekten çalıştığını doğrular ve modeli önceden ısıtır.
 async function libreTranslateSelfTest() {
   if (config.provider !== 'libretranslate') return
   const { translateLines } = require('./translate')
@@ -33,26 +37,22 @@ async function libreTranslateSelfTest() {
       return
     } catch (e) {
       if (attempt === 1) {
-        console.log(
-          '[self-test] LibreTranslate henüz hazır değil (ilk açılışta model iniyor olabilir), bekleniyor...'
-        )
+        console.log('[self-test] LibreTranslate henüz hazır değil (model iniyor olabilir), bekleniyor...')
       }
       await sleep(5000)
     }
   }
-  console.warn(
-    '[self-test] LibreTranslate ~1 dk içinde yanıt vermedi. `docker compose logs libretranslate` ile kontrol edin.'
-  )
+  console.warn('[self-test] LibreTranslate ~1 dk içinde yanıt vermedi. `docker compose logs libretranslate` ile kontrol edin.')
 }
 
 const app = createApp()
 const server = app.listen(config.port, () => {
   preflight()
-  const manifestUrl = `${config.baseUrl}/manifest.json`
   console.log('\n✓ Türkçe Altyazı eklentisi çalışıyor')
-  console.log(`  Karşılama sayfası : ${config.baseUrl}`)
-  console.log(`  Manifest (Stremio): ${manifestUrl}`)
-  console.log('  Bu manifest adresini Stremio > Eklentiler > "Add addon" kısmına yapıştırın.\n')
+  console.log(`  Karşılama sayfası : ${config.baseUrlDisplay}`)
+  console.log(`  Hazırlık listesi  : ${config.baseUrlDisplay}/prepare`)
+  console.log(`  Manifest (Stremio): ${config.baseUrlDisplay}/manifest.json`)
+  console.log('  TV/telefon için bu adresleri bilgisayarınızın LAN IP\'siyle açın.\n')
   libreTranslateSelfTest()
 })
 

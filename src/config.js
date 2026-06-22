@@ -14,10 +14,14 @@ function int(value, fallback) {
 }
 
 const port = int(process.env.PORT, 7000)
+const baseUrlOverride = (process.env.BASE_URL || '').replace(/\/+$/, '')
 
 const config = {
   port,
-  baseUrl: (process.env.BASE_URL || `http://127.0.0.1:${port}`).replace(/\/+$/, ''),
+  // BASE_URL verilmişse onu kullan; verilmezse altyazı URL'leri gelen isteğin
+  // Host başlığından türetilir (farklı cihazlar -TV/telefon- için otomatik doğru adres).
+  baseUrlOverride,
+  baseUrlDisplay: baseUrlOverride || `http://127.0.0.1:${port}`,
 
   sourceLang: (process.env.SOURCE_LANG || 'en').toLowerCase(),
   targetLang: (process.env.TARGET_LANG || 'tr').toLowerCase(),

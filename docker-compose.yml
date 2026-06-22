@@ -50,7 +50,9 @@ services:
       - "${ADDON_HOST_PORT:-7000}:7000"
     environment:
       PORT: "7000"
-      BASE_URL: "${BASE_URL:-http://127.0.0.1:7000}"
+      # BASE_URL boş bırakılırsa altyazı adresleri isteğin Host'undan türetilir
+      # (TV/telefon dahil her cihaz için doğru adres). Sabitlemek isterseniz .env'de verin.
+      BASE_URL: "${BASE_URL:-}"
       TRANSLATE_PROVIDER: "libretranslate"
       # Konteyner ağı içinden çeviri sunucusuna servis adıyla erişilir
       LIBRETRANSLATE_URL: "http://libretranslate:5000"

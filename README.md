@@ -113,22 +113,49 @@ npm start
 - Stremio'da **Eklentiler → "Add addon"** kısmına şu adresi yapıştır:
   `http://127.0.0.1:7000/manifest.json`
 
-Artık bir film/dizi açtığında altyazı listesinde **Türkçe** seçeneği belirir.
-Seçtiğinde birkaç saniye içinde çevrilip gelir (ilk seferde; sonra anında).
+Bir film/dizi açtığında altyazı listesinde tek bir **Türkçe** dili altında
+**"Otomatik çeviri 1 / 2 / 3"** varyantları görünür. (Bu bir **altyazı** eklentisidir;
+Keşfet/Discover ekranında kendi satırı **olmaz** — içerik oynatıp altyazı menüsüne bak.)
+İlk seçimde çeviri hazırlanır; beklememek için aşağıdaki **Hazırlık Listesi**'ni kullan.
 
 ---
 
-## Telefondan / başka cihazdan izlemek
+## 🗂️ Hazırlık listesi (önceden çevir)
 
-Eklenti bilgisayarında çalışıyor ama Stremio'yu başka cihazda (telefon, TV)
-kullanıyorsan, o cihazın altyazı dosyasını bilgisayarından çekebilmesi gerekir.
-`.env` içindeki `BASE_URL`'i bilgisayarının yerel ağ (LAN) IP'siyle değiştir:
+İlk seçimde beklememek için izleyeceklerini önceden hazırlayabilirsin:
 
-```ini
-BASE_URL=http://192.168.1.20:7000
-```
+1. Tarayıcıda **`/prepare`** sayfasını aç (ör. `http://127.0.0.1:7700/prepare`) — ana
+   sayfadaki **"Hazırlık Listesi"** düğmesinden de gidebilirsin.
+2. Film/dizi adını ara, **Hazırla** de (dizide: **Bölüm / Sezon / Tüm dizi**).
+3. Addon arka planda İngilizceyi indirip Türkçeye çevirir ve diske kaydeder; kuyruktaki
+   durumları (Sırada / Çevriliyor / **Hazır ✓**) aynı sayfada görürsün.
+4. İzlerken o altyazı **"hazır ✓"** etiketiyle ve anında gelir.
 
-(IP'ni `ipconfig`/`ifconfig` ile öğrenebilirsin. Cihazlar aynı ağda olmalı.)
+> Sezon/tüm dizi eklemek çok sayıda OpenSubtitles indirmesi yapar (günlük kotaya dikkat;
+> kullanıcı adı/parola girersen kota yükselir).
+
+---
+
+## Telefondan / TV'den izlemek (LG, Android TV vb.)
+
+Eklenti **bilgisayarında** çalışır; başka cihazın (TV/telefon) ona ağ üzerinden
+ulaşması gerekir. Altyazı adresleri artık isteğin geldiği yerden otomatik türetilir,
+bu yüzden tek kural: **eklentiyi `127.0.0.1` ile değil, bilgisayarının LAN IP'siyle ekle.**
+
+1. **`.env`'de `BASE_URL` satırını sil/yorum yap** (boşsa adres otomatik türetilir),
+   sonra `docker compose up -d`.
+2. Bilgisayarının LAN IP'sini öğren: Windows `ipconfig`, macOS `ipconfig getifaddr en0`,
+   Linux `hostname -I` (ör. `192.168.1.20`).
+3. **Başka cihazdan test et:** tarayıcıda `http://192.168.1.20:7700/manifest.json`
+   açılıyor mu? Açılıyorsa LAN erişimi tamam. (Açılmıyorsa: aynı ağ mı? güvenlik duvarı 7700'e izin veriyor mu?)
+4. Bilgisayardaki/web Stremio'da **eski 127.0.0.1 eklentisini kaldır**, eklentiyi
+   `http://192.168.1.20:7700/manifest.json` ile **yeniden ekle**.
+5. **Aynı Stremio hesabıyla** TV'ye giriş yap; eklenti senkronla TV'ye gelir.
+6. Doğrula: TV'de bir şey oynat, **altyazı menüsünden** "Türkçe / Otomatik çeviri"yi seç.
+
+**LG C5 (webOS) notu:** "Successfully synced" eklentinin TV hesabına geldiğini gösterir;
+yine de görünmüyorsa sebep neredeyse her zaman adresin **`127.0.0.1`** olması ya da TV'nin
+bilgisayara ulaşamamasıdır (yukarıdaki 1-4). Bilgisayar açık ve aynı ağda olmalı.
 
 ---
 
@@ -137,7 +164,7 @@ BASE_URL=http://192.168.1.20:7000
 | Değişken | Açıklama | Varsayılan |
 |---|---|---|
 | `PORT` | Eklentinin dinlediği port | `7000` |
-| `BASE_URL` | Stremio'nun altyazıyı çekeceği adres | `http://127.0.0.1:7000` |
+| `BASE_URL` | Altyazı taban adresi. **Boş** = isteğin Host'undan otomatik (TV/telefon için önerilir) | _(boş)_ |
 | `OPENSUBTITLES_API_KEY` | **Zorunlu.** OpenSubtitles API anahtarı | – |
 | `OPENSUBTITLES_USERNAME` / `_PASSWORD` | Kota yükseltmek için (opsiyonel) | – |
 | `TRANSLATE_PROVIDER` | `libretranslate` \| `google` \| `deepl` \| `mymemory` | `libretranslate` |
